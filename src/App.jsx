@@ -1,54 +1,70 @@
 import React from "react";
-import MyReact from "./MyReact";
-import createEventEmitter from "./shared/lib/EventEmitter"
+import { getComponentName } from "./shared/lib/utils";
 
 const App = () => {
   return (
-    <CountProvider>
-      <Count />
-      <PlusButton />
-    </CountProvider>
-  )
-}
+    <>
+      <EnhancedHeader />
+      <EnhancedButton />
+    </>
+  );
+};
 
 export default App;
 
-const countContext = MyReact.createContext({
-  count: 0,
-  setCount: () => {}
-})
+// [고차 컴포넌트]
+// 컴포넌트가 마운트 될 때 기록한다
+// 버튼 컴포넌트를 클릭할 때 기록한다
+// class Header extends React.Component {
+//   componentDidMount() {
+//     console.log("[Header] 마운트");
+//   }
 
-class CountProvider extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      count: 0
+//   render() {
+//     return <header>Header</header>;
+//   }
+// }
+
+// class Button extends React.Component {
+//   componentDidMount() {
+//     console.log("[Button] 마운트");
+//   }
+
+//   handleClick = () => {
+//     console.log("[Button] 클릭");
+//   };
+
+//   render() {
+//     return <button onClick={this.handleClick}>버튼</button>;
+//   }
+// }
+
+
+
+const withLogging = (WrappedComponent) => {
+  function log(message) {
+    console.log(`[${getComponentName(WrappedComponent)}] ${message}`);
+  }
+
+  class WithLogging extends React.Component {
+    render() {
+      const enhancedProps = { log };
+      return <WrappedComponent {...this.props} {...enhancedProps} />;
+    }
+
+    componentDidMount() {
+      log("마운트");
     }
   }
 
-  render() {
-    const value = {
-      count: this.state.count,
-      setCount: nextValue => this.setState({count: nextValue})
-    }
-    return (
-      <countContext.Provider value={value}>
-        {this.props.children}
-      </countContext.Provider>
-    )
-  }
+  return WithLogging;
+};
+
+const Header = () => <header>헤더</header>
+const Button = ({log}) => {
+  const handleClick = () => log('클릭')
+  return <button onClick={handleClick}>버튼</button>
 }
 
-const Count = () => (
-  <countContext.Consumer>
-    {value => <div>{value.count}</div>}
-  </countContext.Consumer>
-)
-
-const PlusButton = () => (
-  <countContext.Consumer>
-    {(value) => (
-      <button onClick={() => value.setCount(value.count+1)}>+ 카운트 올리기</button>
-    )}
-  </countContext.Consumer>
-)
+const EnhancedHeader = withLogging(Header)
+const EnhancedButton = withLogging(Button)
