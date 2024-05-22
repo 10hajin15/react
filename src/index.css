@@ -11,3 +11,45 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.MainPage main {
+  padding-bottom: 50px;
+}
+
+.Backdrop {
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 1000;
+}
+
+.Dialog {
+  background-color: #fff;
+  border-radius: 8px;
+  display: flex;
+  flex-flow: column;
+  padding: 16px;
+  position: relative;
+  width: 300px;
+  z-index: 1100;
+}
+.Dialog > header {
+  font-size: 1.3rem;
+  font-weight: 700;
+  padding-bottom: 1rem;
+}
+.Dialog > main {
+  flex: 1 1;
+  max-height: 200px;
+  min-height: 40px;
+  overflow-y: scroll;
+}
+.Dialog > footer {
+  padding-top: 1rem;
+}
