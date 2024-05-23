@@ -1,13 +1,19 @@
 import React from "react";
-import MainPage from "./pages/MainPage";
-import * as MyLayout from "./MyLayout"
+import MyReact from "./lib/MyReact";
 
-const App = () => {
+function NameField() {
+  const [firstname, setFirstname] = MyReact.useState("사용자1");
+  const [lastname, setLastname] = MyReact.useState("김");
+
+  const handleChangeFirstname = (e) => setFirstname(e.target.value);
+  const handleChangeLastname = (e) => setLastname(e.target.value);
+
   return (
-    <MyLayout.Layout>
-      <MainPage />
-    </MyLayout.Layout>
+    <>
+      <input value={firstname} onChange={handleChangeFirstname} />
+      <input value={lastname} onChange={handleChangeLastname} />
+    </>
   );
-};
+}
 
-export default App;
+export default () => <NameField />;

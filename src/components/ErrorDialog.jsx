@@ -1,5 +1,4 @@
 import Dialog from "./Dialog";
-import * as MyLayout from "../MyLayout";
 
 const ErrorDialog = ({ closeDialog }) => (
   <Dialog
@@ -10,4 +9,4 @@ const ErrorDialog = ({ closeDialog }) => (
   </Dialog>
 );
 
-export default MyLayout.withLayout(ErrorDialog);
+export default ErrorDialog;
