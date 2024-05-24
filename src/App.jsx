@@ -1,6 +1,5 @@
 import React from "react";
 import MyReact from "./MyReact";
-import createEventEmitter from "./shared/lib/EventEmitter"
 
 const App = () => {
   return (
@@ -8,47 +7,28 @@ const App = () => {
       <Count />
       <PlusButton />
     </CountProvider>
-  )
-}
+  );
+};
 
 export default App;
 
-const countContext = MyReact.createContext({
-  count: 0,
-  setCount: () => {}
-})
+const countContext = MyReact.createContext({});
 
-class CountProvider extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      count: 0
-    }
-  }
+const CountProvider = ({children}) => {
+  const [count, setCount] = React.useState(0);
+  const value = { count, setCount };
+  return (
+    <countContext.Provider value={value}>{children}</countContext.Provider>
+  );
+};
 
-  render() {
-    const value = {
-      count: this.state.count,
-      setCount: nextValue => this.setState({count: nextValue})
-    }
-    return (
-      <countContext.Provider value={value}>
-        {this.props.children}
-      </countContext.Provider>
-    )
-  }
-}
+const Count = () => {
+  const { count } = MyReact.useContext(countContext);
+  return <div>{count}</div>;
+};
 
-const Count = () => (
-  <countContext.Consumer>
-    {value => <div>{value.count}</div>}
-  </countContext.Consumer>
-)
-
-const PlusButton = () => (
-  <countContext.Consumer>
-    {(value) => (
-      <button onClick={() => value.setCount(value.count+1)}>+ 카운트 올리기</button>
-    )}
-  </countContext.Consumer>
-)
+const PlusButton = () => {
+  const { count, setCount } = MyReact.useContext(countContext);
+  const handleClick = () => setCount(count + 1);
+  return <button onClick={handleClick}>카운트 올리기</button>;
+};

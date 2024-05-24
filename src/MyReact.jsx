@@ -2,57 +2,54 @@ import React from "react";
 import createEventEmitter from "./shared/lib/EventEmitter";
 
 const MyReact = (function () {
-  function createContext(initialValue) {
-    const emitter = createEventEmitter(initialValue);
+  function createContext(defaultValue) {
+    let emitter;
 
-    class Provider extends React.Component {
-      componentDidMount() {
-        emitter.set(this.props.value);
+    function Provider({ value, children }) {
+      if (!emitter) {
+        emitter = createEventEmitter(value);
       }
+      React.useEffect(() => {
+        emitter.set(value);
+      }, [value]);
 
-      componentDidUpdate() {
-        emitter.set(this.props.value);
-      }
-
-      render() {
-        return <>{this.props.children}</>;
-      }
+      return <>{children}</>;
     }
 
-    class Consumer extends React.Component {
-      constructor(props) {
-        super(props);
-        this.state = {
-          value: emitter.get(),
-        };
-        this.setValue = this.setValue.bind(this);
-      }
+    function getValue() {
+      return emitter ? emitter.get() : defaultValue;
+    }
 
-      setValue(nextValue) {
-        this.setState({ value: nextValue });
-      }
+    function on(handler) {
+      emitter?.on(handler);
+    }
 
-      componentDidMount() {
-        emitter.on(this.setValue);
-      }
-
-      componentWillUnmount() {
-        emitter.off(this.setState);
-      }
-
-      render() {
-        return <>{this.props.children(this.state.value)}</>;
-      }
+    function off(handler) {
+      emitter?.off(handler);
     }
 
     return {
       Provider,
-      Consumer,
+      getValue,
+      on,
+      off,
     };
+  }
+
+  function useContext(context) {
+    const [value, setValue] = React.useState(context.getValue());
+
+    React.useEffect(() => {
+      context.on(setValue);
+      return () => context.off(setValue);
+    }, [context]);
+
+    return value
   }
 
   return {
     createContext,
+    useContext,
   };
 })();
 
