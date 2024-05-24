@@ -2,68 +2,47 @@ import React from "react";
 import ReactDOM from "react-dom";
 import Dialog from "./components/Dialog";
 import Backdrop from "./components/Backdrop";
-import { getComponentName } from "./shared/lib/utils";
 
-export const layoutContext = React.createContext({});
+const layoutContext = React.createContext({});
 layoutContext.displayName = "LayoutContext";
 
-export class Layout extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      dialog: null,
-    };
-    this.setDialog = this.setDialog.bind(this);
-  }
+export const Layout = ({ children }) => {
+  const [dialog, setDialog] = React.useState();
 
-  setDialog(dialog) {
-    this.setState({ dialog });
-  }
-
-  render() {
-    const value = {
-      dialog: this.state.dialog,
-      setDialog: this.setDialog,
-    };
-    return (
-      <layoutContext.Provider value={value}>
-        {this.props.children}
-      </layoutContext.Provider>
-    );
-  }
-}
-
-export const withLayout = (WrappedComponent) => {
-  const WithLayout = (props) => (
-    <layoutContext.Consumer>
-      {({ dialog, setDialog }) => {
-        const openDialog = setDialog;
-        const closeDialog = () => setDialog(null);
-        const startLoading = (message) =>
-          openDialog(<Dialog>{message}</Dialog>);
-
-        const finishLoading = closeDialog;
-        const enhancedProps = {
-          dialog,
-          openDialog,
-          closeDialog,
-          startLoading,
-          finishLoading,
-        };
-
-        return <WrappedComponent {...props} {...enhancedProps} />;
-      }}
-    </layoutContext.Consumer>
+  return (
+    <layoutContext.Provider value={{ dialog, setDialog }}>
+      {children}
+    </layoutContext.Provider>
   );
-  WithLayout.displayName = `WithLayout(${getComponentName(WrappedComponent)})`;
-  return WithLayout;
 };
 
-export const DialogContainer = withLayout(
-  ({ dialog }) =>
-    dialog &&
-    ReactDOM.createPortal(
-      <Backdrop>{dialog}</Backdrop>,
-      document.querySelector("#dialog")
-    )
-);
+export const useDialog = () => {
+  const { dialog, setDialog } = React.useContext(layoutContext);
+  const openDialog = (element) => setDialog(element);
+  const closeDialog = () => setDialog();
+  return {
+    dialog,
+    openDialog,
+    closeDialog,
+  };
+};
+
+export const useLoading = () => {
+  const { openDialog, closeDialog: finishLoading } = useDialog();
+  const startLoading = (message) => openDialog(<Dialog>{message}</Dialog>);
+  return { startLoading, finishLoading };
+};
+
+export const DialogContainer = () => {
+  const { dialog } = useDialog();
+
+  return (
+    <>
+      {dialog &&
+        ReactDOM.createPortal(
+          <Backdrop>{dialog}</Backdrop>,
+          document.querySelector("#dialog")
+        )}
+    </>
+  );
+};
