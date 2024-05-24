@@ -4,121 +4,75 @@ import { getComponentName } from "./shared/lib/utils";
 const routerContext = React.createContext({});
 routerContext.displayName = "RouterContext";
 
-class Router extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      path: window.location.pathname,
-    };
-    this.handleChangePath = this.handleChangePath.bind(this);
-    this.handleOnpopstate = this.handleOnpopstate.bind(this);
-  }
+export const Router = ({ children }) => {
+  const [path, setPath] = React.useState(window.location.path);
 
-  handleChangePath(path) {
-    this.setState({ path });
+  const changePath = (path) => {
+    setPath(path);
     window.history.pushState({ path }, "", path);
-  }
+  };
 
-  handleOnpopstate(event) {
+  const handlePopstate = (event) => {
     const nextPath = event.state && event.state.path;
     if (!nextPath) return;
-    this.setState({ path: nextPath });
-  }
+    setPath(nextPath);
+  };
 
-  componentDidMount() {
-    window.addEventListener("popstate", this.handleOnpopstate);
-    window.history.replaceState({ path: this.state.path }, "");
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener("popstate", this.handleOnpopstate);
-  }
-
-  render() {
-    const contextValue = {
-      path: this.state.path,
-      changePath: this.handleChangePath,
-    };
-    return (
-      <routerContext.Provider value={contextValue}>
-        {this.props.children}
-      </routerContext.Provider>
-    );
-  }
-}
-
-const Routes = ({ children }) => (
-  <routerContext.Consumer>
-    {({ path }) => {
-      let selectedRoute = null;
-
-      React.Children.forEach(children, (child) => {
-        // 리액트 엘리먼트인지 검사한다.
-        if (!React.isValidElement(child)) return;
-
-        // 프레그먼트인지 검사한다.
-        if (child.type === React.Fragment) return;
-
-        // Route 컴포넌트인지 검사한다. 덕 타이핑
-        if (!child.props.path || !child.props.element) return;
-
-        // Route에 등록된 컴포넌트가 요청한 경로에 해당하는지 검사한다.
-        // 요청경로에서 쿼리 문자열을 제거하고 비교한다.
-        if (child.props.path !== path.replace(/\?.*$/, "")) return;
-
-        // 엘리먼트를 찾음
-        selectedRoute = child.props.element;
-      });
-
-      return selectedRoute;
-    }}
-  </routerContext.Consumer>
-);
-
-const Route = () => null;
-
-const Link = ({ to, ...rest }) => (
-  <routerContext.Consumer>
-    {({ path, changePath }) => {
-      const handleClick = (e) => {
-        e.preventDefault();
-        if (to != path) changePath(to);
-      };
-      return <a {...rest} href={to} onClick={handleClick} />;
-    }}
-  </routerContext.Consumer>
-);
-
-const withRouter = (WrappedComponent) => {
-  const WithRouter = (props) => (
-    <routerContext.Consumer>
-      {({ path, changePath }) => {
-        const navigate = (nextPath) => {
-          if (path !== nextPath) changePath(nextPath);
-        };
-
-        const match = (comparedPath) => path === comparedPath;
-
-        const params = () => {
-          const params = new URLSearchParams(window.location.search);
-          const paramObject = {};
-          for (const [key, value] of params) {
-            paramObject[key] = value;
-          }
-          return paramObject;
-        }
-
-        const enhancedProps = {
-          navigate,
-          match,
-          params,
-        };
-
-        return <WrappedComponent {...props} {...enhancedProps} />;
-      }}
-    </routerContext.Consumer>
+  return (
+    <routerContext.Provider value={{ path, changePath }}>
+      {children}
+    </routerContext.Provider>
   );
+};
 
-  WithRouter.displayName = `WithRouter(${getComponentName(WrappedComponent)})`;
-  return WithRouter;
+export const Routes = ({ children }) => {
+  const { path } = React.useContext(routerContext);
+
+  let selectedRoute = null;
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement(child)) return;
+    if (child.type === React.Fragment) return;
+    if (!child.props.path || !child.props.element) return;
+    if (child.props.path !== path.replace(/\?.*$/, "")) return;
+
+    selectedRoute = child.props.element;
+  });
+
+  return selectedRoute;
+};
+
+export const Route = () => null;
+
+export const Link = ({ to, ...rest }) => {
+  const { path, changePath } = React.useContext(routerContext);
+
+  const handleClick = (e) => {
+    e.preventDefault();
+    if (to != path) changePath(to);
+  };
+  return <a {...rest} href={to} onClick={handleClick} />;
+};
+
+export const useNavigate = () => {
+  const { path, changePath } = React.useContext(routerContext);
+  const navigate = (nextPath) => {
+    if (path != nextPath) changePath(nextPath);
+  };
+  return navigate;
+};
+
+export const useMatch = () => {
+  const { path } = React.useContext(routerContext);
+  const match = (comparedPath) => path === comparedPath;
+  return match;
+};
+
+export const useParams = () => {
+  // TODO: useMemo 사용해야
+  const params = new URLSearchParams(window.location.search);
+  const paramObject = {};
+  for (const [key, value] of params) {
+    paramObject[key] = value;
+  }
+  return paramObject;
 };
