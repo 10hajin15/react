@@ -1,30 +1,48 @@
 import React from "react";
-import MyReact from "./MyReact";
+import * as MyForm from "./MyForm";
 
 const App = () => {
-  return <UseRefTest />;
+  return <LoginForm />;
 };
 
 export default App;
 
-const UseRefTest = () => {
-  MyReact.resetCursor();
+const LoginForm = () => {
+  const validate = (values) => {
+    const errors = {
+      email: "",
+      password: "",
+    };
 
-  const [state1, setState1] = React.useState(0);
-  const ref1 = MyReact.useRef(1);
-  const ref2 = MyReact.useRef("a");
+    if (!values.email) {
+      errors.email = "이메일을 입력하세요";
+    }
+    if (!values.password) {
+      errors.password = "비밀번호를 입력하세요";
+    }
 
-  if (state1 > 2) ref1.current = ref1.current + 1;
+    return errors;
+  };
 
-  const handleCount = () => setState1(state1 + 1);
-  const handleSubmit = () => console.log("input 값:", ref2.current.value);
+  const handleSubmit = (values) => {
+    console.log("Submitted", values);
+  };
 
   return (
-    <div>
-      <button onClick={handleCount}>state1 증가 (state1: {state1})</button>
-      <div>ref1(state1이 2보다 크면 증가): {ref1.current}</div>
-      <input ref={ref2} />
-      <button onClick={handleSubmit}>ref2로 인풋 값 조회</button>
-    </div>
+    <MyForm.Form
+      initialValue={{ email: "", password: "" }}
+      validate={validate}
+      onSubmit={handleSubmit}
+    >
+      <div>
+        <MyForm.Field type="text" name="email" />
+        <MyForm.ErrorMessage name="email" />
+      </div>
+      <div>
+        <MyForm.Field type="password" name="password" />
+        <MyForm.ErrorMessage name="password" />
+      </div>
+      <button type="submit">로그인</button>
+    </MyForm.Form>
   );
 };
