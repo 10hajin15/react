@@ -52,19 +52,63 @@ const MyReact = (function MyReact() {
   function useReducer(reducer, initialValue) {
     const { forceUpdate } = useForceUpdate();
     if (!isInitialized[cursor]) {
-      memorizedStates[cursor] = createStore(reducer, initialValue)
-      isInitialized[cursor] = true
+      memorizedStates[cursor] = createStore(reducer, initialValue);
+      isInitialized[cursor] = true;
     }
-    const store = memorizedStates[cursor]
-    store.subscribe(forceUpdate)
-    cursor = cursor+1
-    return [store.getState(), store.dispatch]
+    const store = memorizedStates[cursor];
+    store.subscribe(forceUpdate);
+    cursor = cursor + 1;
+    return [store.getState(), store.dispatch];
+  }
+
+  function useMemo(nextCreate, deps) {
+    if (!memorizedStates[cursor]) {
+      const nextValue = nextCreate();
+      memorizedStates[cursor] = [nextValue, deps];
+      cursor = cursor + 1;
+      return nextValue;
+    }
+    const nextDeps = deps;
+    const [prevValue, prevDeps] = memorizedStates[cursor];
+    if (prevDeps.every((prev, idx) => prev === nextDeps[idx])) {
+      cursor = cursor + 1;
+      return prevValue;
+    }
+    const nextValue = nextCreate();
+    memorizedStates[cursor] = [nextValue, nextDeps];
+    cursor = cursor + 1;
+    return nextValue;
+  }
+
+  function memo(TargetComponent) {
+    return (nextProps) => {
+      if (!TargetComponent.memorizedState) {
+        const nextValue = React.createElement(TargetComponent, nextProps);
+        TargetComponent.memorizedState = [nextValue, nextProps];
+        return nextValue;
+      }
+      const [prevValue, prevProps] = TargetComponent.memorizedState;
+      const sameProps = Object.keys(nextProps).every((key) => {
+        return nextProps[key] === prevProps[key];
+      });
+      if (sameProps) return prevValue;
+      const nextValue = React.createElement(TargetComponent, nextProps);
+      TargetComponent.memorizedState = [nextValue, nextProps];
+      return nextValue;
+    };
+  }
+
+  function useCallback(callback, deps) {
+    return useMemo(() => callback, deps);
   }
 
   return {
     useRef,
     createStore,
     useReducer,
+    useMemo,
+    memo,
+    useCallback,
 
     resetCursor,
   };

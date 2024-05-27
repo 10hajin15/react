@@ -1,150 +1,63 @@
 import React from "react";
 import MyReact from "./MyReact";
-import * as MyForm_reducer from "./MyForm_reducer";
 
-const App = () => {
-  return <LoginForm />;
-};
+const Board = ({ posts, tag }) => {
+  console.log("Board rendered");
+  MyReact.resetCursor();
 
-export default App;
+  const [darkTheme, setDarkTheme] = React.useState(false);
 
-function RegisterForm() {
-  const [state, dispatch] = MyReact.useReducer(reducer, initialValue);
+  const handleClick = MyReact.useCallback((postId) => {
+    console.log("handleClick", postId);
+  }, []);
 
-  const handleChange = (e) =>
-    dispatch({ type: "SET_FIELD", name: e.target.name, value: e.target.value });
-  const handleReset = (e) => dispatch({ type: "RESET" });
-  const handleSubmit = (e) => dispatch({ type: "VALIDATE" });
+  const filterPosts = () => {
+    console.log("filterPosts");
+    return posts.filter((post) => (tag ? post.tag === tag : true));
+  };
+
+  const filteredPosts = MyReact.useMemo(filterPosts, [posts, tag]);
 
   return (
     <>
       <div>
-        <label>닉네임:</label>
-        <input
-          type="text"
-          name="nickname"
-          value={state.value.nickname}
-          onChange={handleChange}
-        />
-        <span>{state.error.nickname}</span>
+        <button onClick={() => setDarkTheme(!darkTheme)}>테마변경</button>
+        <span>{darkTheme ? "어두운 테마" : "밝은 테마"}</span>
       </div>
-      <div>
-        <label>비밀번호:</label>
-        <input
-          type="password"
-          name="password"
-          value={state.value.password}
-          onChange={handleChange}
-        />
-        <span>{state.error.password}</span>
-      </div>
-      <button onClick={handleReset}>초기화</button>
-      <button onClick={handleSubmit}>회원가입</button>
+      <hr />
+      <FilteredPosts value={filteredPosts} onClick={handleClick} />
     </>
   );
-}
-
-// ############ createStore 사용 ############
-// function reducer(state, action) {
-//   if (action.type === 'count') {
-//     return {...state, value: state.value + 1}
-//   }
-//   throw "알 수 없는 액션"
-// }
-
-// const initialValue = {value:0}
-// const store = MyReact.createStore(reducer, initialValue)
-
-// console.log("after createStore:", store.getState()) // {value: 0}
-
-// store.subscribe(() => console.log("subscribe:", store.getState()))
-// store.dispatch({type: "count"})   // {value: 1}
-
-const initialValue = {
-  value: {
-    nickname: "",
-    password: "",
-  },
-  error: {
-    nickname: "",
-    password: "",
-  },
 };
 
-const reducer = (state, action) => {
-  if (action.type === "SET_FIELD") {
-    return {
-      ...state,
-      value: {
-        ...state.value,
-        [action.name]: action.value,
-      },
-    };
-  }
-  if (action.type === "RESET") {
-    return {
-      value: {
-        nickname: "",
-        password: "",
-      },
-      error: {
-        nickname: "",
-        password: "",
-      },
-    };
-  }
-  if (action.type === "VALIDATE") {
-    return {
-      ...state,
-      error: {
-        nickname: /^\w+$/.test(state.value.nickname)
-          ? ""
-          : "영문, 숫자만 입력하세요",
-        password: /^.{3,6}$/.test(state.value.password)
-          ? ""
-          : "3자이상 6자이하로 입력하세요",
-      },
-    };
-  }
-  throw Error("알 수 없는 액션");
-};
-
-// ############ LoginForm에 reducer 적용 ############
-const LoginForm = () => {
-  const validate = (values) => {
-    const errors = {
-      email: "",
-      password: "",
-    };
-
-    if (!values.email) {
-      errors.email = "이메일을 입력하세요";
-    }
-    if (!values.password) {
-      errors.password = "비밀번호를 입력하세요";
-    }
-
-    return errors;
-  };
-
-  const handleSubmit = (values) => {
-    console.log("Submitted", values);
-  };
-
+const FilteredPosts = MyReact.memo(({ value, onClick }) => {
+  console.log("FilteredPosts");
   return (
-    <MyForm_reducer.Form
-      initialValue={{
-        email: "",
-        password: "",
-      }}
-      validate={validate}
-      onSubmit={handleSubmit}
-    >
-      <MyForm_reducer.Field type="text" name="email" />
-      <MyForm_reducer.ErrorMessage name="email" />
-      <MyForm_reducer.Field type="password" name="password" />
-      <MyForm_reducer.ErrorMessage name="password" />
-      <button type="submit">로그인</button>
-    </MyForm_reducer.Form>
+    <ul>
+      {(value || []).map(({ id, content, tag }) => (
+        <li key={id} onClick={onClick(id)}>
+          {content} <span>#{tag}</span>
+        </li>
+      ))}
+    </ul>
+  );
+});
+
+export default () => {
+  const [tag, setTag] = React.useState("");
+  return (
+    <>
+      <button onClick={() => setTag("")}>All</button>
+      <button onClick={() => setTag("tag1")}>Tag1</button>
+      <button onClick={() => setTag("tag2")}>Tag2</button>
+      <Board
+        posts={[
+          { id: "id1", content: "content1", tag: "tag1" },
+          { id: "id2", content: "content2", tag: "tag1" },
+          { id: "id3", content: "content3", tag: "tag2" },
+        ]}
+        tag={tag}
+      />
+    </>
   );
 };
