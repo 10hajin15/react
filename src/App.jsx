@@ -2,33 +2,29 @@ import React from "react";
 import MyReact from "./MyReact";
 
 const App = () => {
-  return (
-    <CountProvider>
-      <Count />
-      <PlusButton />
-    </CountProvider>
-  );
+  return <UseRefTest />;
 };
 
 export default App;
 
-const countContext = MyReact.createContext({});
+const UseRefTest = () => {
+  MyReact.resetCursor();
 
-const CountProvider = ({children}) => {
-  const [count, setCount] = React.useState(0);
-  const value = { count, setCount };
+  const [state1, setState1] = React.useState(0);
+  const ref1 = MyReact.useRef(1);
+  const ref2 = MyReact.useRef("a");
+
+  if (state1 > 2) ref1.current = ref1.current + 1;
+
+  const handleCount = () => setState1(state1 + 1);
+  const handleSubmit = () => console.log("input 값:", ref2.current.value);
+
   return (
-    <countContext.Provider value={value}>{children}</countContext.Provider>
+    <div>
+      <button onClick={handleCount}>state1 증가 (state1: {state1})</button>
+      <div>ref1(state1이 2보다 크면 증가): {ref1.current}</div>
+      <input ref={ref2} />
+      <button onClick={handleSubmit}>ref2로 인풋 값 조회</button>
+    </div>
   );
-};
-
-const Count = () => {
-  const { count } = MyReact.useContext(countContext);
-  return <div>{count}</div>;
-};
-
-const PlusButton = () => {
-  const { count, setCount } = MyReact.useContext(countContext);
-  const handleClick = () => setCount(count + 1);
-  return <button onClick={handleClick}>카운트 올리기</button>;
 };

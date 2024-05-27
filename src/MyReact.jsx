@@ -1,55 +1,26 @@
-import React from "react";
-import createEventEmitter from "./shared/lib/EventEmitter";
+const MyReact = (function MyReact() {
+  const memorizedStates = [];
+  const isInitialized = [];
+  let cursor = 0;
 
-const MyReact = (function () {
-  function createContext(defaultValue) {
-    let emitter;
-
-    function Provider({ value, children }) {
-      if (!emitter) {
-        emitter = createEventEmitter(value);
-      }
-      React.useEffect(() => {
-        emitter.set(value);
-      }, [value]);
-
-      return <>{children}</>;
-    }
-
-    function getValue() {
-      return emitter ? emitter.get() : defaultValue;
-    }
-
-    function on(handler) {
-      emitter?.on(handler);
-    }
-
-    function off(handler) {
-      emitter?.off(handler);
-    }
-
-    return {
-      Provider,
-      getValue,
-      on,
-      off,
-    };
+  function resetCursor() {
+    cursor = 0;
   }
 
-  function useContext(context) {
-    const [value, setValue] = React.useState(context.getValue());
-
-    React.useEffect(() => {
-      context.on(setValue);
-      return () => context.off(setValue);
-    }, [context]);
-
-    return value
+  function useRef(initialValue) {
+    if (!isInitialized[cursor]) {
+      memorizedStates[cursor] = { current: initialValue };
+      isInitialized[cursor] = true;
+    }
+    const memorizedState = memorizedStates[cursor];
+    cursor = cursor + 1;
+    return memorizedState;
   }
 
   return {
-    createContext,
-    useContext,
+    useRef,
+
+    resetCursor,
   };
 })();
 
